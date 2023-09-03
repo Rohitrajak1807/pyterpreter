@@ -1,6 +1,9 @@
 from typing import Union
 
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
+INTEGER = 'INTEGER'
+EOF = 'EOF'
+PLUS = 'PLUS'
+MINUS = 'MINUS'
 
 
 class Token:
@@ -53,8 +56,9 @@ class Interpreter:
                 current_char = self.text[self.pos]
             token = Token(INTEGER, int(digits))
             return token
-        if current_char == '+':
-            token = Token(PLUS, current_char)
+        # Modify the code and instead of ‘+’ handle ‘-‘ to evaluate subtractions like “7-5”
+        if current_char == '-':
+            token = Token(MINUS, current_char)
             self.pos += 1
             return token
         self.err()
@@ -70,10 +74,10 @@ class Interpreter:
         left = self.current_token
         self.eat(INTEGER)
         op = self.current_token
-        self.eat(PLUS)
+        self.eat(MINUS)
         right = self.current_token
         self.eat(INTEGER)
-        res = left.value + right.value
+        res = left.value - right.value
         return res
 
 
