@@ -28,19 +28,31 @@ class Interpreter:
         self.pos = 0
         self.current_token = None
 
+    # 2. Add a method that skips whitespace characters so that your calculator can handle inputs with whitespace
+    # characters like ” 12 + 3”
+    def skip_wspace(self):
+        while self.text[self.pos].isspace():
+            self.pos += 1
+
     def err(self):
         raise Exception('error parsing input')
 
     def next_token(self):
         if self.pos > len(self.text) - 1:
             return Token(EOF, None)
+        self.skip_wspace()
         current_char = self.text[self.pos]
-
         if current_char.isdigit():
-            token = Token(INTEGER, int(current_char))
-            self.pos += 1
+            digits: str = ''
+            # 1. Modify the code to allow multiple-digit integers in the input, for example “12+3”
+            while current_char.isdigit():
+                digits += current_char
+                self.pos += 1
+                if self.pos > len(self.text) - 1:
+                    break
+                current_char = self.text[self.pos]
+            token = Token(INTEGER, int(digits))
             return token
-
         if current_char == '+':
             token = Token(PLUS, current_char)
             self.pos += 1
@@ -58,7 +70,6 @@ class Interpreter:
         left = self.current_token
         self.eat(INTEGER)
         op = self.current_token
-        _ = op
         self.eat(PLUS)
         right = self.current_token
         self.eat(INTEGER)
