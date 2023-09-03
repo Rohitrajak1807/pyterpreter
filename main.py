@@ -56,6 +56,10 @@ class Interpreter:
                 current_char = self.text[self.pos]
             token = Token(INTEGER, int(digits))
             return token
+        if current_char == '+':
+            token = Token(PLUS, current_char)
+            self.pos += 1
+            return token
         # Modify the code and instead of ‘+’ handle ‘-‘ to evaluate subtractions like “7-5”
         if current_char == '-':
             token = Token(MINUS, current_char)
@@ -74,11 +78,16 @@ class Interpreter:
         left = self.current_token
         self.eat(INTEGER)
         op = self.current_token
-        self.eat(MINUS)
+        if op.typ == MINUS:
+            self.eat(MINUS)
+        if op.typ == PLUS:
+            self.eat(PLUS)
         right = self.current_token
         self.eat(INTEGER)
-        res = left.value - right.value
-        return res
+        if op.typ == PLUS:
+            return left.value + right.value
+        if op.typ == MINUS:
+            return left.value - right.value
 
 
 def main():
