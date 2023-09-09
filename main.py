@@ -4,6 +4,8 @@ INTEGER = 'INTEGER'
 EOF = 'EOF'
 PLUS = 'PLUS'
 MINUS = 'MINUS'
+DIVIDE = 'DIVIDE'
+MULTIPLY = 'MULTIPLY'
 
 
 class Token:
@@ -65,6 +67,14 @@ class Interpreter:
             token = Token(MINUS, current_char)
             self.pos += 1
             return token
+        if current_char == '*':
+            token = Token(MULTIPLY, current_char)
+            self.pos += 1
+            return token
+        if current_char == '/':
+            token = Token(DIVIDE, current_char)
+            self.pos += 1
+            return token
         self.err()
 
     def eat(self, token_type):
@@ -82,12 +92,20 @@ class Interpreter:
             self.eat(MINUS)
         if op.typ == PLUS:
             self.eat(PLUS)
+        if op.typ == MULTIPLY:
+            self.eat(MULTIPLY)
+        if op.typ == DIVIDE:
+            self.eat(DIVIDE)
         right = self.current_token
         self.eat(INTEGER)
         if op.typ == PLUS:
             return left.value + right.value
         if op.typ == MINUS:
             return left.value - right.value
+        if op.typ == MULTIPLY:
+            return left.value * right.value
+        if op.typ == DIVIDE:
+            return left.value / right.value
 
 
 def main():
