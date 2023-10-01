@@ -27,55 +27,62 @@ class Interpreter:
     text: str
     pos: int
     current_token: Union[Token | None]
+    current_char: Union[str | None]
 
     def __init__(self, text):
         self.text = text
         self.pos = 0
         self.current_token = None
+        self.current_char = self.text[self.pos]
 
     # 2. Add a method that skips whitespace characters so that your calculator can handle inputs with whitespace
     # characters like ” 12 + 3”
     def skip_wspace(self):
-        while self.text[self.pos].isspace():
-            self.pos += 1
+        while self.current_char is not None and self.current_char.isspace():
+            self.advance()
 
     def err(self):
         raise Exception('error parsing input')
 
-    def next_token(self):
+    def advance(self):
+        self.pos += 1
         if self.pos > len(self.text) - 1:
-            return Token(EOF, None)
-        self.skip_wspace()
-        current_char = self.text[self.pos]
-        if current_char.isdigit():
-            digits: str = ''
-            # 1. Modify the code to allow multiple-digit integers in the input, for example “12+3”
-            while current_char.isdigit():
-                digits += current_char
-                self.pos += 1
-                if self.pos > len(self.text) - 1:
-                    break
-                current_char = self.text[self.pos]
-            token = Token(INTEGER, int(digits))
-            return token
-        if current_char == '+':
-            token = Token(PLUS, current_char)
-            self.pos += 1
-            return token
-        # Modify the code and instead of ‘+’ handle ‘-‘ to evaluate subtractions like “7-5”
-        if current_char == '-':
-            token = Token(MINUS, current_char)
-            self.pos += 1
-            return token
-        if current_char == '*':
-            token = Token(MULTIPLY, current_char)
-            self.pos += 1
-            return token
-        if current_char == '/':
-            token = Token(DIVIDE, current_char)
-            self.pos += 1
-            return token
-        self.err()
+            self.current_char = None
+        else:
+            self.current_char = self.text[self.pos]
+
+    def integer(self) -> int:
+        digits: str = ''
+        while self.current_char is not None and self.current_char.isdigit():
+            digits += self.current_char
+            self.advance()
+        return int(digits)
+
+    def next_token(self):
+        while self.current_char is not None:
+            if self.current_char.isspace():
+                self.skip_wspace()
+                continue
+            if self.current_char.isdigit():
+                return Token(INTEGER, self.integer())
+            if self.current_char == '+':
+                token = Token(PLUS, self.current_char)
+                self.advance()
+                return token
+            if self.current_char == '-':
+                token = Token(MINUS, self.current_char)
+                self.advance()
+                return token
+            if self.current_char == '*':
+                token = Token(MULTIPLY, self.current_char)
+                self.advance()
+                return token
+            if self.current_char == '/':
+                token = Token(DIVIDE, self.current_char)
+                self.advance()
+                return token
+            self.err()
+        return Token(EOF, None)
 
     def eat(self, token_type):
         if self.current_token.typ == token_type:
@@ -83,29 +90,29 @@ class Interpreter:
         else:
             self.err()
 
+    def term(self) -> int:
+        token = self.current_token
+        self.eat(INTEGER)
+        return token.value
+
     def expr(self):
         self.current_token = self.next_token()
-        left = self.current_token
-        self.eat(INTEGER)
-        op = self.current_token
-        if op.typ == MINUS:
-            self.eat(MINUS)
-        if op.typ == PLUS:
-            self.eat(PLUS)
-        if op.typ == MULTIPLY:
-            self.eat(MULTIPLY)
-        if op.typ == DIVIDE:
-            self.eat(DIVIDE)
-        right = self.current_token
-        self.eat(INTEGER)
-        if op.typ == PLUS:
-            return left.value + right.value
-        if op.typ == MINUS:
-            return left.value - right.value
-        if op.typ == MULTIPLY:
-            return left.value * right.value
-        if op.typ == DIVIDE:
-            return left.value / right.value
+        result = self.term()
+        while self.current_token.typ in (PLUS, MINUS, MULTIPLY, DIVIDE):
+            token = self.current_token
+            if token.typ == MINUS:
+                self.eat(MINUS)
+                result = result - self.term()
+            if token.typ == PLUS:
+                self.eat(PLUS)
+                result = result + self.term()
+            if token.typ == MULTIPLY:
+                self.eat(MULTIPLY)
+                result = result * self.term()
+            if token.typ == DIVIDE:
+                self.eat(DIVIDE)
+                result = result / self.term()
+        return result
 
 
 def main():
